@@ -1,0 +1,5 @@
+/* Replace this */
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
