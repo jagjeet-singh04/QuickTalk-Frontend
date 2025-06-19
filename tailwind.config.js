@@ -1,11 +1,12 @@
-import daisyui from "daisyui";
-
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  plugins: [daisyui],  // Now using the imported daisyui
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}"
+  ],
+  plugins: [require("daisyui")],  // Use require() instead of import
   daisyui: {
-     themes: [
+    themes: [
       "light",
       "dark",
       "cupcake",
@@ -39,5 +40,11 @@ export default {
       "nord",
       "sunset"
     ],
-  },
-};
+    darkTheme: "dark", // Optional: default dark theme
+    base: true, // applies background color and foreground color for root element by default
+    styled: true, // include daisyUI colors and design decisions for all components
+    utils: true, // adds responsive and modifier utility classes
+    prefix: "", // prefix for daisyUI classnames (components, modifiers and responsive class names. Not colors)
+    logs: true, // Shows info about daisyUI version and used config in the console when building your CSS
+  }
+}
