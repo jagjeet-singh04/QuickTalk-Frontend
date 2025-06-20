@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "https://quic-talk-backend.vercel.app",
+  baseURL: import.meta.env.VITE_BACKEND_URL || "https://quictalk-backend-production.up.railway.app/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
