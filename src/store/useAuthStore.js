@@ -12,41 +12,46 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
 
-  checkAuth: async () => {
-    try {
-      const res = await axiosInstance.get("/api/auth/check");
-      set({ authUser: res.data });
-      get().connectSocket();
-    } catch (error) {
+ checkAuth: async () => {
+  try {
+    const res = await axiosInstance.get("/api/auth/check");
+    set({ authUser: res.data });
+    get().connectSocket();
+  } catch (error) {
+    // Don't show error for 401 (normal for unauthenticated users)
+    if (error.response?.status !== 401) {
       console.log("Error in checkAuth:", error);
-      
-      // Handle 401 specifically
-      if (error.response?.status === 401) {
-        set({ authUser: null });
-        return; // Stop further processing
-      }
-      
-      // Show error only if not 401
-      toast.error("Session expired. Please login again");
-    } finally {
-      set({ isCheckingAuth: false });
     }
-  },
+    set({ authUser: null });
+  } finally {
+    set({ isCheckingAuth: false });
+  }
+},
 
-  signup: async (data) => {
-    set({ isSigningUp: true });
-    try {
-      const res = await axiosInstance.post("/api/auth/signup", data);
+ signup: async (data) => {
+  set({ isSigningUp: true });
+  try {
+    const res = await axiosInstance.post("/api/auth/signup", data);
+    
+    // Check if response contains user data
+    if (res.data && res.data._id) {
       set({ authUser: res.data });
       toast.success("Account created successfully");
       get().connectSocket();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Signup failed");
-    } finally {
-      set({ isSigningUp: false });
+    } else {
+      throw new Error("Invalid response from server");
     }
-  },
-
+  } catch (error) {
+    // Handle duplicate key errors specifically
+    if (error.response?.data?.field === "email") {
+      toast.error("Email already in use");
+    } else {
+      toast.error(error.response?.data?.message || "Signup failed");
+    }
+  } finally {
+    set({ isSigningUp: false });
+  }
+},
   login: async (data) => {
     set({ isLoggingIn: true });
     try {

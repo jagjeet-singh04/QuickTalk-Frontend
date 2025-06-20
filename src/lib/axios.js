@@ -21,13 +21,9 @@ axiosInstance.interceptors.request.use(config => {
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
-    if (error.response) {
-      // Handle 401 specifically
-      if (error.response.status === 401) {
-        console.error("Authentication error");
-        // Clear auth state
-        useAuthStore.getState().logout();
-      }
+    // Handle 401 globally
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
     }
     return Promise.reject(error);
   }
