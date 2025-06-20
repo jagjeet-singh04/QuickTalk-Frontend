@@ -108,29 +108,29 @@ export const useAuthStore = create((set, get) => ({
     autoConnect: false,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
-    path: "/socket.io/", // Explicit path
+    transports: ["websocket"], // Force WebSockets
+    closeOnBeforeunload: false,
+    pingTimeout: 60000, // 60 seconds
+    pingInterval: 25000, // 25 seconds
   });
   
   socket.connect();
   set({ socket });
 
-  // Add error listeners
-  socket.on("connect_error", (err) => {
-    console.error("Socket connection error:", err.message);
-    if (err.message.includes("CORS")) {
-      toast.error("Connection issue. Please refresh");
-    }
-  });
-  
+  // Handle online users
   socket.on("getOnlineUsers", (userIds) => {
     set({ onlineUsers: userIds });
   });
-    
-    // Handle socket errors
-    socket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err);
-    });
-  },
+  
+  // Add heartbeat
+  setInterval(() => {
+    if (socket.connected) {
+      socket.emit("ping", () => {
+        // Received pong
+      });
+    }
+  }, 20000); // Every 20 seconds
+},
   
   disconnectSocket: () => {
     const socket = get().socket;
