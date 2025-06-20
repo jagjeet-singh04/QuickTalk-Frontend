@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare, User } from "lucide-react";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 import AuthImagePattern from "../components/AuthImagePattern";
 import toast from "react-hot-toast";
 
@@ -14,7 +13,10 @@ const SignUpPage = () => {
     password: "",
   });
 
-  const { signup, isSigningUp } = useAuthStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { signup } = useAuthStore();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     if (!formData.fullName.trim()) return toast.error("Full name is required");
@@ -26,26 +28,32 @@ const SignUpPage = () => {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    const success = validateForm();
+    const isValid = validateForm();
+    if (isValid !== true) return;
 
-    if (success === true) signup(formData);
+    setIsSubmitting(true);
+    try {
+      await signup(formData);
+      navigate("/");
+    } catch (error) {
+      console.error("Signup failed:", error);
+      toast.error("Signup failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* left side */}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
         <div className="w-full max-w-md space-y-8">
-          {/* LOGO */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
-              <div
-                className="size-12 rounded-xl bg-primary/10 flex items-center justify-center 
-              group-hover:bg-primary/20 transition-colors"
-              >
+              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <MessageSquare className="size-6 text-primary" />
               </div>
               <h1 className="text-2xl font-bold mt-2">Create Account</h1>
@@ -64,7 +72,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type="text"
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="John Doe"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -82,7 +90,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type="email"
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -100,7 +108,7 @@ const SignUpPage = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`input input-bordered w-full pl-10`}
+                  className="input input-bordered w-full pl-10"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -119,11 +127,15 @@ const SignUpPage = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" disabled={isSigningUp}>
-              {isSigningUp ? (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`btn btn-primary w-full ${isSubmitting ? "loading" : ""}`}
+            >
+              {isSubmitting ? (
                 <>
                   <Loader2 className="size-5 animate-spin" />
-                  Loading...
+                  Creating account...
                 </>
               ) : (
                 "Create Account"
@@ -142,8 +154,6 @@ const SignUpPage = () => {
         </div>
       </div>
 
-      {/* right side */}
-
       <AuthImagePattern
         title="Join our community"
         subtitle="Connect with friends, share moments, and stay in touch with your loved ones."
@@ -151,4 +161,5 @@ const SignUpPage = () => {
     </div>
   );
 };
+
 export default SignUpPage;
