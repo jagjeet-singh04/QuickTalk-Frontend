@@ -80,9 +80,11 @@ export const useAuthStore = create((set, get) => ({
 
   connectSocket: () => {
   const socket = io(import.meta.env.VITE_BACKEND_URL, {
-    withCredentials: true,
-    transports: ['websocket']
-  });
+  withCredentials: true,
+  autoConnect: false, // Connect manually after auth
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
     
     socket.connect();
     set({ socket });

@@ -23,12 +23,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://quic-talk-backend.vercel.app/',
+        target: 'quictalk-backend-production.up.railway.app',
         changeOrigin: true,
         secure: true
       },
       '/socket.io': {
-        target: 'https://quic-talk-backend.vercel.app/',
+        target: 'quictalk-backend-production.up.railway.app',
         changeOrigin: true,
         secure: true,
         ws: true
