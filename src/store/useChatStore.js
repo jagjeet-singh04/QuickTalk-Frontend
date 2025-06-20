@@ -21,18 +21,24 @@ export const useChatStore = create((set, get) => ({
       set({ isUsersLoading: false });
     }
   },
-
-   getMessages: async (userId) => {
-    set({ isMessagesLoading: true });
-    try {
-      // Use the correct endpoint
-      const res = await axiosInstance.get(`/api/messages/conversation/${userId}`);
-      set({ messages: res.data });
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to load messages");
-    } finally {
-      set({ isMessagesLoading: false });
-    }
+getMessages: async (userId) => {
+  set({ isMessagesLoading: true, messages: [] });
+  try {
+    // Use the correct endpoint
+    const res = await axiosInstance.get(`/api/messages/conversation/${userId}`);
+    
+    // Sort messages by date
+    const sortedMessages = res.data.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+    
+    set({ messages: sortedMessages });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    toast.error(error.response?.data?.error || "Failed to load messages");
+  } finally {
+    set({ isMessagesLoading: false });
+  }
   },
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
