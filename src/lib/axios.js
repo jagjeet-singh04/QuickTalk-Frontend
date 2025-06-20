@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore.js';
+
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL, // Keep just the base URL
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+  withCredentials: true, // Ensure this is set to true
   headers: {
     "Content-Type": "application/json",
   },
@@ -18,13 +18,8 @@ axiosInstance.interceptors.request.use(config => {
 });
 
 // Update response interceptor
-axiosInstance.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle 401 globally
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-    }
-    return Promise.reject(error);
-  }
-);
+axiosInstance.interceptors.request.use(config => {
+  // Ensure credentials are sent with every request
+  config.withCredentials = true;
+  return config;
+});
