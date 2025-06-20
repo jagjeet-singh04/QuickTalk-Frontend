@@ -17,7 +17,19 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000
+    proxy: {
+      '/api': {
+        target: 'https://quic-talk-backend.vercel.app/',
+        changeOrigin: true,
+        secure: true
+      },
+      '/socket.io': {
+        target: 'https://quic-talk-backend.vercel.app/',
+        changeOrigin: true,
+        secure: true,
+        ws: true
+      }
+    }
   },
   css: {
     postcss: {
