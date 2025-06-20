@@ -8,6 +8,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
+      input: {
+        main: './index.html',
+        login: './src/pages/LoginPage.jsx' 
+      },
       output: {
         manualChunks: {
           react: ['react', 'react-dom'],
