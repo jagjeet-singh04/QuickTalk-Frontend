@@ -79,19 +79,10 @@ export const useAuthStore = create((set, get) => ({
   },
 
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
-    
-    // Get the base URL without the /api path for socket.io
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const socketBaseUrl = backendUrl.replace('/api', '');
-    
-    const socket = io(socketBaseUrl, {
-      query: {
-        userId: authUser._id,
-      },
-      withCredentials: true,
-    });
+  const socket = io(import.meta.env.VITE_BACKEND_URL, {
+    withCredentials: true,
+    transports: ['websocket']
+  });
     
     socket.connect();
     set({ socket });
