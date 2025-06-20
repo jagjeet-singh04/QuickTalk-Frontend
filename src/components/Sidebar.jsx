@@ -6,19 +6,22 @@ import { Users } from "lucide-react";
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  const { onlineUsers, authUser } = useAuthStore();
 
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+
+  // Filter out current user
+  const filteredUsers = users.filter(user => user._id !== authUser?._id);
+
+  // Filtered user list based on toggle
+  const visibleUsers = showOnlineOnly
+    ? filteredUsers.filter((user) => onlineUsers.includes(user._id))
+    : filteredUsers;
 
   // Fetch users on mount
   useEffect(() => {
     getUsers();
   }, [getUsers]);
-
-  // Filtered user list based on toggle
-  const filteredUsers = showOnlineOnly
-    ? users.filter((user) => onlineUsers.includes(user._id))
-    : users;
 
   if (isUsersLoading) return <SidebarSkeleton />;
 
@@ -49,8 +52,8 @@ const Sidebar = () => {
       </div>
 
       {/* User List */}
-      <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
+      <div className="overflow-y-auto w-full py-3 flex-1">
+        {visibleUsers.map((user) => (
           <button
             key={user._id}
             onClick={() => setSelectedUser(user)}
@@ -83,7 +86,7 @@ const Sidebar = () => {
         ))}
 
         {/* No Users Case */}
-        {filteredUsers.length === 0 && (
+        {visibleUsers.length === 0 && (
           <div className="text-center text-zinc-500 py-4">
             {showOnlineOnly ? "No online users" : "No users found"}
           </div>
