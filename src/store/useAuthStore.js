@@ -19,7 +19,15 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       console.log("Error in checkAuth:", error);
-      set({ authUser: null });
+      
+      // Handle 401 specifically
+      if (error.response?.status === 401) {
+        set({ authUser: null });
+        return; // Stop further processing
+      }
+      
+      // Show error only if not 401
+      toast.error("Session expired. Please login again");
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -64,34 +72,56 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  updateProfile: async (data) => {
-    set({ isUpdatingProfile: true });
-    try {
-      const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.log("Error in update profile:", error);
-      toast.error(error.response?.data?.message || "Update failed");
-    } finally {
-      set({ isUpdatingProfile: false });
+ updateProfile: async (data) => {
+  set({ isUpdatingProfile: true });
+  try {
+    // Send FormData instead of JSON for images
+    const formData = new FormData();
+    if (data.profilePic) {
+      formData.append('profilePic', data.profilePic);
     }
-  },
+    formData.append('fullName', data.fullName);
+    
+    const res = await axiosInstance.put("/auth/update-profile", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    set({ authUser: res.data });
+    toast.success("Profile updated successfully");
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Update failed");
+  } finally {
+    set({ isUpdatingProfile: false });
+  }
+},
 
   connectSocket: () => {
-  const socket = io(import.meta.env.VITE_BACKEND_URL, {
-  withCredentials: true,
-  autoConnect: false, // Connect manually after auth
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000
-});
-    
-    socket.connect();
-    set({ socket });
+  const backendUrl = import.meta.env.VITE_BACKEND_URL.replace('/api', '');
+  
+  const socket = io(backendUrl, {
+    withCredentials: true,
+    autoConnect: false,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    path: "/socket.io/", // Explicit path
+  });
+  
+  socket.connect();
+  set({ socket });
 
-    socket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
-    });
+  // Add error listeners
+  socket.on("connect_error", (err) => {
+    console.error("Socket connection error:", err.message);
+    if (err.message.includes("CORS")) {
+      toast.error("Connection issue. Please refresh");
+    }
+  });
+  
+  socket.on("getOnlineUsers", (userIds) => {
+    set({ onlineUsers: userIds });
+  });
     
     // Handle socket errors
     socket.on("connect_error", (err) => {

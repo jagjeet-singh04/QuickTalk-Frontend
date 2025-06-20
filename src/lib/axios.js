@@ -1,31 +1,33 @@
 import axios from 'axios';
-
+import { useAuthStore } from '../store/useAuthStore.js';
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "https://quictalk-backend-production.up.railway.app/api",
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Add response interceptor to handle errors globally
+// Add request interceptor to handle cookies
+axiosInstance.interceptors.request.use(config => {
+  // Ensure cookies are sent with all requests
+  config.withCredentials = true;
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
+// Update response interceptor
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      // Handle specific status codes
+      // Handle 401 specifically
       if (error.response.status === 401) {
         console.error("Authentication error");
-        // Redirect to login or refresh token
-      } else if (error.response.status === 403) {
-        console.error("Forbidden - CORS issue");
+        // Clear auth state
+        useAuthStore.getState().logout();
       }
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response received:", error.request);
-    } else {
-      // Something happened in setting up the request
-      console.error("Request setup error:", error.message);
     }
     return Promise.reject(error);
   }
