@@ -19,10 +19,16 @@ const ChatContainer = () => {
   const messageEndRef = useRef(null);
 
   useEffect(() => {
-    if (selectedUser?._id) {
-      getMessages(selectedUser._id);
-    }
-  }, [selectedUser, getMessages]);
+  // Re-fetch messages when component mounts
+  if (selectedUser?._id) {
+    getMessages(selectedUser._id);
+  }
+  
+  // Clear messages when component unmounts
+  return () => {
+    useChatStore.getState().messages = [];
+  };
+}, [selectedUser, getMessages]);
 
   useEffect(() => {
     const unsubscribe = subscribeToMessages();
