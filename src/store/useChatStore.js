@@ -52,19 +52,31 @@ export const useChatStore = create((set, get) => ({
   if (!socket || !selectedUser || !currentUserId) return;
 
   const messageHandler = (newMessage) => {
+    // Convert IDs to strings for consistent comparison
+    const formattedMessage = {
+      ...newMessage,
+      senderId: newMessage.senderId.toString(),
+      receiverId: newMessage.receiverId.toString()
+    };
+
     // Check if message belongs to current conversation
     const isCurrentConversation = 
-      (newMessage.senderId === currentUserId && newMessage.receiverId === selectedUser._id) ||
-      (newMessage.senderId === selectedUser._id && newMessage.receiverId === currentUserId);
+      (formattedMessage.senderId === currentUserId && 
+       formattedMessage.receiverId === selectedUser._id) ||
+      (formattedMessage.senderId === selectedUser._id && 
+       formattedMessage.receiverId === currentUserId);
     
     if (isCurrentConversation) {
       set(state => {
         // Prevent duplicates
-        if (state.messages.some(msg => msg._id === newMessage._id)) {
-          return state;
-        }
+        const exists = state.messages.some(msg => 
+          msg._id === formattedMessage._id
+        );
+        
+        if (exists) return state;
+        
         return {
-          messages: [...state.messages, newMessage]
+          messages: [...state.messages, formattedMessage]
         };
       });
     }
