@@ -45,31 +45,37 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    const socket = useAuthStore.getState().socket;
+  const { selectedUser } = get();
+  const socket = useAuthStore.getState().socket;
+  const currentUserId = useAuthStore.getState().authUser?._id;
+  
+  if (!socket || !selectedUser || !currentUserId) return;
+
+  const messageHandler = (newMessage) => {
+    // Check if message belongs to current conversation
+    const isCurrentConversation = 
+      (newMessage.senderId === currentUserId && newMessage.receiverId === selectedUser._id) ||
+      (newMessage.senderId === selectedUser._id && newMessage.receiverId === currentUserId);
     
-    if (!socket || !selectedUser) return;
-
-    const messageHandler = (newMessage) => {
-      // Only add messages for the current conversation
-      if (
-        (newMessage.senderId === selectedUser._id && 
-         newMessage.receiverId === useAuthStore.getState().authUser?._id) ||
-        (newMessage.senderId === useAuthStore.getState().authUser?._id && 
-         newMessage.receiverId === selectedUser._id)
-      ) {
-        set(state => ({
+    if (isCurrentConversation) {
+      set(state => {
+        // Prevent duplicates
+        if (state.messages.some(msg => msg._id === newMessage._id)) {
+          return state;
+        }
+        return {
           messages: [...state.messages, newMessage]
-        }));
-      }
-    };
+        };
+      });
+    }
+  };
 
-    socket.on("newMessage", messageHandler);
+  socket.on("newMessage", messageHandler);
 
-    return () => {
-      socket.off("newMessage", messageHandler);
-    };
-  },
+  return () => {
+    socket.off("newMessage", messageHandler);
+  };
+},
 
   setSelectedUser: (selectedUser) => set({ selectedUser, messages: [] }),
 }));

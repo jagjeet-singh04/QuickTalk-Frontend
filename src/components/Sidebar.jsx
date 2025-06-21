@@ -10,14 +10,15 @@ const Sidebar = () => {
 
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
-  // Filter out current user
-  const filteredUsers = users.filter(user => user._id !== authUser?._id);
-
-  // Filtered user list based on toggle
-  const visibleUsers = showOnlineOnly
-    ? filteredUsers.filter((user) => onlineUsers.includes(user._id))
-    : filteredUsers;
-
+  // Filter out current user and map with online status
+  const visibleUsers = users
+    .filter(user => user._id !== authUser?._id)
+    .map(user => ({
+      ...user,
+      isOnline: onlineUsers.includes(user._id)
+    }))
+    .filter(user => !showOnlineOnly || user.isOnline);
+    
   // Fetch users on mount
   useEffect(() => {
     getUsers();
@@ -70,16 +71,20 @@ const Sidebar = () => {
                 alt={user.fullName || user.name}
                 className="size-12 object-cover rounded-full"
               />
-              {onlineUsers.includes(user._id) && (
-                <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
-              )}
+              <span 
+                className={`absolute bottom-0 right-0 size-3 rounded-full ring-2 ring-white ${
+                  user.isOnline ? "bg-green-500" : "bg-gray-500"
+                }`}
+              />
             </div>
 
             {/* User Info */}
             <div className="hidden lg:block text-left min-w-0">
               <div className="font-medium truncate">{user.fullName || user.name}</div>
-              <div className="text-sm text-zinc-400">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+              <div className={`text-sm ${
+                user.isOnline ? "text-green-500" : "text-gray-500"
+              }`}>
+                {user.isOnline ? "Online" : "Offline"}
               </div>
             </div>
           </button>

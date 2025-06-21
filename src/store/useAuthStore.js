@@ -88,28 +88,37 @@ export const useAuthStore = create((set, get) => ({
 
   connectSocket: () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const { authUser } = get();
     
+    if (!authUser?._id) {
+      console.warn("⚠️ Cannot connect socket: No authenticated user");
+      return;
+    }
+
     const socket = io(backendUrl, {
       withCredentials: true,
-      autoConnect: false,
+      autoConnect: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      transports: ["websocket"]
+      reconnectionDelay: 3000,
+      transports: ["websocket"],
+      query: {
+        userId: authUser._id
+      }
     });
     
-    socket.connect();
     set({ socket });
 
-    // Handle online users
     socket.on("onlineUsersUpdate", (userIds) => {
+      console.log("🟢 Online users updated:", userIds);
       set({ onlineUsers: userIds });
     });
     
-    // Handle heartbeat
-    socket.on("heartbeat", () => {
-      socket.emit("heartbeat", () => {
-        // Keeps connection alive
-      });
+    // Add reconnect logic
+    socket.on("reconnect", (attempt) => {
+      console.log(`🔁 Reconnected after ${attempt} attempts`);
+      if (authUser?._id) {
+        socket.emit("authenticate", { userId: authUser._id });
+      }
     });
     
     // Handle socket errors
@@ -121,8 +130,8 @@ export const useAuthStore = create((set, get) => ({
     // Handle connection events
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
-      if (get().authUser?._id) {
-        socket.emit("authenticate", { userId: get().authUser._id });
+      if (authUser?._id) {
+        socket.emit("authenticate", { userId: authUser._id });
       }
     });
   },
